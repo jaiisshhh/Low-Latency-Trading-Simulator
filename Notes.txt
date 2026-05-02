@@ -1,0 +1,21 @@
+Compilation Cmd : 
+clang++ -std=c++17 main.cpp tick_generator.cpp -pthread -o main
+./main
+
+BENCHMARKS : 
+
+| Level       | Throughput |
+| ----------- | ---------- |
+| Beginner    | < 1M       |
+| Good        | 2–5M       |
+| Strong      | 5–10M      |
+| Elite (HFT) | 20M+       |
+
+| Level     | P50     | P99    |
+| --------- | ------- | ------ |
+| Beginner  | µs–ms   | ms     |
+| Good      | <1 µs   | <20 µs |
+| Strong    | <500 ns | <10 µs |
+| Elite HFT | <100 ns | <1 µs  |
+
+Data : BTCUSDT : https://data.binance.vision/?prefix=data/spot/daily/trades/BTCUSDT/
