@@ -1,3 +1,65 @@
+- I built a low-latency trading simulator in C++ to understand how real-time market data systems work in HFT environments.
+- The system follows an event-driven pipeline where market data is generated or loaded and passed through a lock-free single-producer single-consumer queue into a processing engine.
+- The processor updates an O(1) price-indexed order book, executes a simple strategy, and tracks latency and throughput in real time.
+- I focused heavily on performance — avoiding heap allocations in the hot path, using cache-friendly arrays instead of maps, and minimizing branching. This allowed me to achieve around 10 million ticks per second with roughly 40 nanoseconds P50 latency.
+- To make it more realistic, I integrated real Binance BTCUSDT trade data and built a separate Python backtesting module to evaluate strategies using PnL, drawdown, and equity curves.
+- The strategy itself is simple — based on order flow imbalance — since the goal of the project was not alpha generation but to design a high-performance, low-latency system and validate it with real data.
+
+“Why lock-free queue?”
+To eliminate mutex contention and reduce latency jitter. In a single producer-consumer setup, SPSC queues are optimal because they allow wait-free communication.
+
+“Why array-based order book?”
+Arrays give predictable memory access and better cache locality. Compared to maps, they avoid pointer chasing and dynamic allocation, which is critical in low-latency systems.
+
+“Where is latency measured?”
+Inside the processing loop, measuring the time taken per tick update. I track P50, P99, and P999 to understand both average and tail latency.
+
+“Why Python for backtesting?”
+Python is better suited for data analysis and visualization. I used it to quickly validate strategy behavior and compute metrics like drawdown and equity curves.
+
+Why SPSC queue?
+Because the system has a single producer (data feed) and a single consumer (processor).
+SPSC queues are the simplest and fastest lock-free structure for this pattern — they avoid synchronization overhead and enable wait-free push/pop operations.
+
+Why lock-free?
+Lock-free structures reduce latency and eliminate contention.
+In low-latency systems, even small delays from locks can cause unpredictable spikes, so lock-free ensures consistent and deterministic performance.
+
+Why not mutex?
+Mutexes introduce blocking, context switching, and contention.
+Under load, this leads to latency spikes and poor tail performance (P99/P999), which is unacceptable in trading systems.
+
+Why array over map?
+Arrays provide contiguous memory access, which improves cache locality and avoids pointer chasing.
+Maps involve dynamic allocation and indirection, which increases latency and cache misses.
+
+What is cache locality?
+Cache locality means accessing data that is stored close together in memory.
+This improves performance because CPUs fetch data in cache lines, so sequential memory access is much faster than scattered access.
+
+Why latency matters?
+In trading systems, decisions must be made faster than competitors.
+Even microseconds of delay can lead to worse execution prices or missed opportunities.
+
+Why arrays over maps? (if asked again differently)
+Arrays allow constant-time indexing and better cache utilization, while maps involve tree traversal or hashing, which adds overhead and unpredictability.
+
+Where is latency measured?
+Inside the processing loop, measuring the time taken to process each tick — from receiving it from the queue to updating the order book and executing the strategy.
+
+What causes P99 latency spikes?
+Typically:
+Cache misses
+Branch misprediction
+Occasional memory stalls
+OS scheduling or context switches
+👉 Strong answer: Tail latency is often caused by non-deterministic factors like cache behavior and system-level interruptions.
+
+How would you scale to multi-symbol?
+I would partition by symbol and assign each symbol (or group of symbols) to a dedicated thread with its own order book and queue.
+This avoids contention and allows parallel processing.
+👉 Use CPU pinning and NUMA-aware allocation for further optimization
+
 Compilation Cmd : 
 clang++ -std=c++17 main.cpp tick_generator.cpp -pthread -o main
 ./main
@@ -19,3 +81,81 @@ BENCHMARKS :
 | Elite HFT | <100 ns | <1 µs  |
 
 Data : BTCUSDT : https://data.binance.vision/?prefix=data/spot/daily/trades/BTCUSDT/
+
+PHASE 0 — Skeleton
+ main.cpp
+ modular headers (order_book.h, processor.h, etc.)
+ basic compile/run working
+ multi-file build setup
+PHASE 1 — Core Pipeline
+ Tick Generator → Queue → Processor → OrderBook
+ Tick struct (timestamp, price, qty, side)
+ Tick generator (fake data)
+ SPSC lock-free queue
+ Processor loop
+ Basic order book (best bid/ask)
+PHASE 2 — Metrics
+ Latency tracking (P50, P99)
+ Throughput (ticks/sec)
+ Real timestamp-based latency
+ Queue pressure simulation
+PHASE 3 — Fix correctness
+ Prevent negative spread
+ Proper timestamp placement
+ Mutable data flow (remove const issues)
+PHASE 4 — REAL MARKET DATA
+ Consistent bid/ask generation
+ Dynamic spread (not fixed 0.01)
+ Price movement with structure
+ Correlated bid-ask updates
+PHASE 5 — LEVEL 2 ORDER BOOK 
+ Move beyond best bid/ask
+ Multiple price levels (depth)
+ Map/array of price → quantity
+ Efficient updates (no slow structures)
+ Maintain sorted bid/ask levels
+PHASE 6 — PERFORMANCE ENGINEERING                        
+ Make it low-latency 
+ Pre-allocated memory (avoid push_back growth)
+ Avoid heap allocations in hot path
+ Cache-friendly structures (arrays > maps)
+ Reduce branching
+ Inline critical functions
+PHASE 7 — ADVANCED SYSTEMS                  
+ Real systems thinking
+ CPU affinity (pin threads)
+ Avoid false sharing (padding)
+ Lock-free improvements
+ Backpressure handling
+PHASE 8 — STRATEGY LAYER
+ Use the system
+ Simple trading signals
+ Example:
+spread < threshold
+momentum trigger
+ Simulated order execution
+ Track PnL
+PHASE 9 — BACKTESTING 
+ Feed historical-like data
+ Evaluate strategy performance
+ Metrics:
+Sharpe
+Drawdown
+PHASE 10 — BENCHMARKING               
+ Final polish
+ Report:
+Throughput
+P50 / P99 / P999
+ Stress test (10M+ ticks)
+ Compare versions
+
+Why SPSC queue?
+Why lock-free?
+Why not mutex?
+Why array over map?
+What is cache locality?
+Why latency matters?
+Why arrays over maps?
+Where is latency measured?
+What causes P99 spikes?
+How would you scale to multi-symbol?
