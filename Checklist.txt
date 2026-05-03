@@ -141,3 +141,7 @@ Why not mutex?
 Why array over map?
 What is cache locality?
 Why latency matters?
+Why arrays over maps?
+Where is latency measured?
+What causes P99 spikes?
+How would you scale to multi-symbol?
