@@ -15,6 +15,8 @@ Market Data → Lock-Free Queue → Processor → Order Book → Strategy
 
 It processes millions of ticks per second while maintaining extremely low latency, making it a strong representation of systems used in **high-frequency trading (HFT)** environments.
 
+Additionally, a **Python-based backtesting module** is included to validate strategies on real market data.
+
 ---
 
 ## 🧠 Key Features
@@ -42,6 +44,12 @@ It processes millions of ticks per second while maintaining extremely low latenc
 - Flow imbalance-based trading strategy
 - Real-time execution (buy/sell simulation)
 - PnL tracking
+
+### 📉 Backtesting (Python)
+
+- Replay real Binance tick data
+- Strategy validation on historical data
+- Equity curve + drawdown analysis
 
 ### 📡 Real Market Data
 
@@ -126,6 +134,32 @@ P99  : ~42 ns
 P999 : ~84 ns
 ```
 
+### 📈 Sample Backtest Result
+
+```
+Trades       : 103
+Position     : 3
+Cash         : -231474.55
+PnL          : 3223.10
+Max Drawdown : 3473.76
+```
+
+### 📊 Equity Curve
+
+- Shows cumulative PnL over time
+- Highlights:
+  - Profitability trends
+  - Drawdowns
+  - Strategy stability
+
+---
+
+### ⚠️ Notes
+
+- No transaction costs or slippage
+- Strategy is **for validation, not production trading**
+- Focus is on **system + pipeline correctness**
+
 ---
 
 ## ⚡ Performance Optimizations
@@ -193,6 +227,11 @@ clang++ -std=c++17 main.cpp tick_generator.cpp -pthread -O3 -o main
 ./main
 ```
 
+### Run Backtest (Python)
+```bash
+cd Backtesting
+python3 backtest.py
+```
 ---
 
 ## 📂 Project Structure
@@ -207,6 +246,11 @@ clang++ -std=c++17 main.cpp tick_generator.cpp -pthread -O3 -o main
 ├── tick_generator.cpp
 ├── types.h
 ├── data_loader.h
+│
+├── Backtesting/
+│   └── backtest.py
+│
+├── market_data/
 ```
 
 ---
@@ -221,6 +265,8 @@ clang++ -std=c++17 main.cpp tick_generator.cpp -pthread -O3 -o main
 - Trade data ≠ order book data
 
 - Microstructure signals are noisy and require filtering
+
+- Strategy validation requires separate offline backtesting
 
 ---
 
@@ -240,16 +286,11 @@ clang++ -std=c++17 main.cpp tick_generator.cpp -pthread -O3 -o main
 This project demonstrates:
 
 - Systems-level thinking
-- Performance engineering
+- Low-latency performance engineering
 - Concurrency and lock-free design
 - Real-world data handling
 - End-to-end trading system design
-
----
-
-## 👤 Author
-
-Built as part of preparation for **Quant Developer / Low Latency Systems roles**.
+- Strategy validation pipeline (C++ + Python)
 
 ---
 
